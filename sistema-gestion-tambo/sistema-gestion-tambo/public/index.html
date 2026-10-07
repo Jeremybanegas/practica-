@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema web seguro de gestión de inventario y tienda Tambo+">
+    <title>Tambo+ | Sistema Web de Gestión</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <nav class="navbar" aria-label="Navegación principal">
+            <a class="brand" href="#tienda" aria-label="Ir al catálogo">Tambo+</a>
+            <div class="nav-buttons">
+                <button type="button" class="nav-btn active" data-tab="tienda">🏪 Tienda</button>
+                <button type="button" class="nav-btn" data-tab="admin">🔐 Administración</button>
+                <button type="button" class="nav-btn cart-button" id="cart-button">
+                    🛒 Carrito <span id="cart-badge" aria-label="Productos en carrito">0</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <main>
+        <section id="tienda" class="tab-content active" aria-labelledby="catalog-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Tienda virtual</p>
+                    <h1 id="catalog-title">Catálogo de Productos</h1>
+                    <p class="helper-text">Los clientes pueden consultar productos y agregarlos al carrito.</p>
+                </div>
+                <span id="catalog-status" class="status-text" aria-live="polite"></span>
+            </div>
+            <div class="store-grid" id="store-catalog" aria-live="polite"></div>
+        </section>
+
+        <section id="admin" class="tab-content" aria-labelledby="admin-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Intranet protegida</p>
+                    <h1 id="admin-title">Administración</h1>
+                    <p id="admin-state-text" class="helper-text" aria-live="polite">Verificando acceso…</p>
+                </div>
+            </div>
+
+            <article id="setup-panel" class="admin-container auth-card hidden">
+                <div class="auth-icon" aria-hidden="true">🛡️</div>
+                <h2>Configuración inicial</h2>
+                <p class="helper-text">
+                    Todavía no existe un administrador. Crea la primera cuenta una sola vez.
+                    La contraseña se transforma con bcrypt antes de guardarse.
+                </p>
+
+                <form id="setup-form" novalidate>
+                    <div class="field">
+                        <label for="setup-user">Usuario administrador</label>
+                        <input type="text" id="setup-user" minlength="4" maxlength="30" pattern="[A-Za-z0-9._-]+" required autocomplete="username">
+                        <small class="field-error" id="setup-user-error"></small>
+                    </div>
+
+                    <div class="field">
+                        <label for="setup-pass">Contraseña</label>
+                        <input type="password" id="setup-pass" minlength="8" maxlength="72" required autocomplete="new-password">
+                        <small class="helper-text">Mínimo 8 caracteres, con mayúscula, minúscula y número.</small>
+                        <small class="field-error" id="setup-pass-error"></small>
+                    </div>
+
+                    <button type="submit" class="primary-btn full-width" id="btn-setup">Crear administrador</button>
+                </form>
+            </article>
+
+            <article id="login-panel" class="admin-container auth-card hidden">
+                <div class="auth-icon" aria-hidden="true">🔐</div>
+                <h2>Iniciar sesión</h2>
+                <p class="helper-text">Solo un administrador autenticado puede agregar, editar o eliminar productos.</p>
+
+                <form id="login-form" novalidate>
+                    <div class="field">
+                        <label for="login-user">Usuario</label>
+                        <input type="text" id="login-user" maxlength="30" required autocomplete="username">
+                        <small class="field-error" id="login-user-error"></small>
+                    </div>
+
+                    <div class="field">
+                        <label for="login-pass">Contraseña</label>
+                        <input type="password" id="login-pass" maxlength="72" required autocomplete="current-password">
+                        <small class="field-error" id="login-pass-error"></small>
+                    </div>
+
+                    <button type="submit" class="primary-btn full-width" id="btn-login">Ingresar al panel</button>
+                </form>
+            </article>
+
+            <div id="admin-dashboard" class="hidden">
+                <article class="session-bar">
+                    <div>
+                        <span class="session-label">Sesión activa</span>
+                        <strong id="session-user">Administrador</strong>
+                    </div>
+                    <button type="button" class="secondary-btn" id="btn-logout">Cerrar sesión</button>
+                </article>
+
+                <article class="admin-container">
+                    <div class="dashboard-title-row">
+                        <div>
+                            <h2>Gestión de Inventario</h2>
+                            <p class="helper-text">CRUD protegido: crea, actualiza y elimina productos sin recargar la página.</p>
+                        </div>
+                        <span class="secure-badge">🔒 Acceso autorizado</span>
+                    </div>
+
+                    <form id="product-form" novalidate>
+                        <input type="hidden" id="prod-id">
+
+                        <div class="field">
+                            <label for="prod-name">Nombre del producto</label>
+                            <input type="text" id="prod-name" minlength="2" maxlength="80" required autocomplete="off">
+                            <small class="field-error" id="name-error"></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="prod-price">Precio (S/)</label>
+                            <input type="number" id="prod-price" min="0.01" max="10000" step="0.01" required>
+                            <small class="field-error" id="price-error"></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="prod-image">URL de imagen</label>
+                            <input type="url" id="prod-image" maxlength="1000" placeholder="https://...">
+                            <small class="field-error" id="image-error"></small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="primary-btn" id="btn-save">Guardar producto</button>
+                            <button type="button" class="secondary-btn hidden" id="btn-cancel-edit">Cancelar edición</button>
+                        </div>
+                    </form>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <caption>Productos registrados en el sistema</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Producto</th>
+                                    <th scope="col">Precio</th>
+                                    <th scope="col">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-list"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <aside id="cart-panel" class="cart-panel" aria-hidden="true" aria-labelledby="cart-title">
+        <div class="cart-header">
+            <h2 id="cart-title">Tu pedido</h2>
+            <button type="button" class="close-cart" id="close-cart" aria-label="Cerrar carrito">✕</button>
+        </div>
+        <div class="cart-items" id="cart-items-container"></div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <strong id="cart-total-price">S/ 0.00</strong>
+            </div>
+            <button type="button" class="btn-checkout" id="checkout-button">Realizar compra</button>
+        </div>
+    </aside>
+    <div id="cart-overlay" class="cart-overlay" hidden></div>
+</body>
+</html>
